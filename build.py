@@ -1,12 +1,10 @@
 """
-build.py — Génère exams/learnr.seb à partir des variables d'environnement Render.
+build.py — v2 (plus permissif pour plateformes interactives)
 
-Variables attendues (à définir dans Render → Environment) :
+Variables d'environnement attendues :
   - PLATFORM_URL     : URL complète de la plateforme d'examen
-  - QUIT_PASSWORD    : mot de passe de sortie de SEB (en clair, sera hashé)
-  - ADMIN_PASSWORD   : mot de passe admin SEB (en clair, sera hashé)
-
-Exécuté automatiquement par Render avant chaque déploiement.
+  - QUIT_PASSWORD    : mot de passe de sortie de SEB
+  - ADMIN_PASSWORD   : mot de passe admin SEB
 """
 import os
 import sys
@@ -53,15 +51,17 @@ def main() -> None:
 
     <key>sebConfigPurpose</key><integer>0</integer>
 
+    <!-- Sortie de SEB -->
     <key>allowQuit</key><true/>
     <key>ignoreExitKeys</key><true/>
     <key>allowPreferencesWindow</key><false/>
 
+    <!-- Plein écran -->
     <key>browserViewMode</key><integer>1</integer>
     <key>mainBrowserWindowWidth</key><string>100%</string>
     <key>mainBrowserWindowHeight</key><string>100%</string>
-    <key>mainBrowserWindowPositioning</key><integer>1</integer>
 
+    <!-- Blocage captures (essentiel) -->
     <key>allowScreenCapture</key><false/>
     <key>allowWindowCapture</key><false/>
     <key>blockScreenShotsLegacy</key><true/>
@@ -70,20 +70,27 @@ def main() -> None:
     <key>allowDictation</key><false/>
     <key>allowAirPlayMirroring</key><false/>
 
-    <key>enableRightMouse</key><false/>
+    <!-- Navigation : on garde l'essentiel mais on relâche les pop-ups -->
     <key>browserWindowAllowAddressBar</key><false/>
-    <key>browserWindowAllowReload</key><false/>
+    <key>browserWindowAllowReload</key><true/>
     <key>showReloadButton</key><false/>
     <key>showMenuBar</key><false/>
     <key>browserWindowShowURL</key><integer>0</integer>
+
+    <!-- JavaScript ESSENTIEL pour plateformes interactives -->
     <key>enableJavaScript</key><true/>
     <key>enableJava</key><false/>
-    <key>enablePlugIns</key><false/>
-    <key>blockPopUpWindows</key><true/>
-    <key>clipboardPolicy</key><integer>0</integer>
+    <key>enablePlugIns</key><true/>
+    <key>blockPopUpWindows</key><false/>
+    <key>newBrowserWindowByLinkPolicy</key><integer>2</integer>
+    <key>newBrowserWindowByScriptPolicy</key><integer>2</integer>
 
+    <!-- Clic droit autorisé (sinon certains menus contextuels cassent) -->
+    <key>enableRightMouse</key><true/>
+
+    <!-- Filtre URL : seul le domaine d'examen autorisé -->
     <key>URLFilterEnable</key><true/>
-    <key>URLFilterEnableContentFilter</key><true/>
+    <key>URLFilterEnableContentFilter</key><false/>
     <key>URLFilterRules</key>
     <array>
         <dict>
@@ -94,11 +101,14 @@ def main() -> None:
         </dict>
     </array>
 
-    <key>allowDownloads</key><false/>
-    <key>allowUploads</key><false/>
+    <!-- Téléchargements/téléversements autorisés -->
+    <key>allowDownloads</key><true/>
+    <key>allowUploads</key><true/>
     <key>downloadAndOpenSebConfig</key><false/>
 
-    <key>enableMacOSAAC</key><true/>
+    <!-- IMPORTANT : AAC désactivé (mode kiosque classique de SEB).
+         AAC est trop strict et casse de nombreuses apps web interactives. -->
+    <key>enableMacOSAAC</key><false/>
 </dict>
 </plist>
 """
@@ -108,16 +118,16 @@ def main() -> None:
     output_path = output_dir / "learnr.seb"
     output_path.write_text(seb_xml, encoding="utf-8")
 
-    # Affichage diagnostique (sans révéler les mots de passe en clair)
     print("══════════════════════════════════════════════════════════════")
-    print("  GÉNÉRATION DU FICHIER .SEB")
+    print("  GÉNÉRATION DU FICHIER .SEB (v2 — permissif)")
     print("══════════════════════════════════════════════════════════════")
     print(f"  ✓ Fichier         : {output_path}")
     print(f"  ✓ Taille          : {output_path.stat().st_size} octets")
     print(f"  ✓ URL plateforme  : {platform_url}")
     print(f"  ✓ Filtre URL      : *{domain}*")
-    print(f"  ✓ Hash quit       : {quit_hash[:16]}…")
-    print(f"  ✓ Hash admin      : {admin_hash[:16]}…")
+    print(f"  ✓ AAC             : désactivé (compatibilité)")
+    print(f"  ✓ JavaScript      : activé")
+    print(f"  ✓ Pop-ups         : autorisés")
     print("══════════════════════════════════════════════════════════════")
 
 
