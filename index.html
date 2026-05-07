@@ -542,8 +542,8 @@
 
     <script>
         // ===== CONFIGURATION =====
-        // Adaptez ces deux constantes à votre déploiement Render
-        const SITE_HOST = "votre-site.onrender.com";
+        // window.location.host détecte automatiquement "accueil-r.onrender.com"
+        const SITE_HOST = window.location.host; 
         const SEB_PATH  = "/exams/learnr.seb";
         // =========================
 
